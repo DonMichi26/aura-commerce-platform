@@ -17,32 +17,28 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.4, delay: index * 0.08 }}
       className="group"
     >
-      <div className="relative overflow-hidden bg-secondary mb-3">
+      <div className="relative overflow-hidden bg-secondary rounded-lg mb-3">
         <Link to={`/product/${product.id}`}>
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <img src={product.image} alt={product.name} className="w-full aspect-[4/5] object-cover group-hover:scale-105 transition-transform duration-500" />
         </Link>
-        {/* Badges */}
         {product.badge && (
-          <span className={`absolute top-3 left-3 ${
-            product.badge === 'new' ? 'badge-new' : product.badge === 'sale' ? 'badge-sale' : 'badge-soldout'
+          <span className={`absolute top-3 left-3 rounded-sm ${
+            product.badge === 'new' ? 'badge-new' : product.badge === 'sale' ? 'badge-sale' : product.badge === 'custom' ? 'badge-custom' : 'badge-soldout'
           }`}>
-            {product.badge === 'new' ? 'Nuevo' : product.badge === 'sale' ? 'Oferta' : 'Agotado'}
+            {product.badge === 'new' ? 'Nuevo' : product.badge === 'sale' ? 'Oferta' : product.badge === 'custom' ? 'Personalizable' : 'Agotado'}
           </span>
         )}
-        {/* Quick actions */}
+        {product.customizable && !product.badge && (
+          <span className="absolute top-3 left-3 badge-custom rounded-sm">A medida</span>
+        )}
         <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button className="w-8 h-8 bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors">
+          <button className="w-8 h-8 bg-background/90 backdrop-blur-sm rounded-md flex items-center justify-center hover:bg-background transition-colors">
             <Heart size={14} />
           </button>
         </div>
-        {/* Add to cart */}
         <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
             onClick={() => addItem(product)}
@@ -65,7 +61,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <span className="text-xs text-muted-foreground font-body">({product.reviews})</span>
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-sm font-body font-semibold">${product.price}</span>
+          <span className="text-sm font-body font-semibold">${product.price}{product.priceUnit ? `/${product.priceUnit}` : ''}</span>
           {product.originalPrice && (
             <span className="text-xs text-muted-foreground font-body line-through">${product.originalPrice}</span>
           )}
