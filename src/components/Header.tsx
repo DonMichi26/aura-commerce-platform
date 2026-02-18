@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, User, ShoppingBag, Heart, Menu, X, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, User, ShoppingBag, Heart, Menu, X, ChevronDown, LogOut, Settings } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -15,7 +16,25 @@ const navLinks = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { setIsOpen, itemCount } = useCart();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -52,7 +71,71 @@ export default function Header() {
             <Search size={18} />
           </button>
           <Link to="/" className="p-2 hover:bg-secondary rounded-md transition-colors hidden sm:flex"><Heart size={18} /></Link>
-          <Link to="/" className="p-2 hover:bg-secondary rounded-md transition-colors hidden sm:flex"><User size={18} /></Link>
+          
+          {/* User menu */}
+          <div ref={userMenuRef} className="relative hidden sm:block">
+            {user ? (
+              <>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="p-2 hover:bg-secondary rounded-md transition-colors flex items-center gap-2"
+                  aria-label="Menú de usuario"
+                >
+                  <div className="w-7 h-7 wood-gradient rounded-full flex items-center justify-center text-accent-foreground text-xs font-bold font-body">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <ChevronDown size={14} className={`text-muted-foreground transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-md shadow-lg overflow-hidden z-50"
+                    >
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="text-sm font-body font-semibold">{user.name} {user.lastName}</p>
+                        <p className="text-xs font-body text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-body text-foreground hover:bg-secondary transition-colors"
+                        >
+                          <Settings size={16} />
+                          Mi Cuenta
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setUserMenuOpen(false);
+                            navigate("/");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-body text-destructive hover:bg-secondary transition-colors text-left"
+                        >
+                          <LogOut size={16} />
+                          Cerrar Sesión
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="p-2 hover:bg-secondary rounded-md transition-colors flex items-center gap-2"
+                aria-label="Iniciar sesión"
+              >
+                <User size={18} />
+                <span className="text-sm font-body font-medium">Entrar</span>
+              </Link>
+            )}
+          </div>
+          
           <button onClick={() => setIsOpen(true)} className="p-2 hover:bg-secondary rounded-md transition-colors relative" aria-label="Carrito">
             <ShoppingBag size={18} />
             {itemCount > 0 && (
